@@ -1,37 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace WorkshopAPI.Models;
-
-public partial class Event
+namespace WorkshopAPI.Models
 {
-    public int Id { get; set; }
+    public partial class Event
+    {
+        public Event()
+        {
+            EventInscriptions = new HashSet<EventInscription>();
+        }
 
-    public string Name { get; set; } = null!;
+        public int IdEvent { get; set; }
+        public string? Nom { get; set; }
+        public DateTime? DateDebut { get; set; }
+        public DateTime? DateFin { get; set; }
+        public string? ShortDescription { get; set; }
+        public string? LongDescription { get; set; }
+        public string? Auteur { get; set; }
+        public int? NbPlacesDispo { get; set; }
+        public int? NbPlaceRestantes { get; set; }
+        public string? ImageUrl { get; set; }
+        public DateOnly? DateCreation { get; set; }
+        public string? Lieu { get; set; }
 
-    public DateTime Startdate { get; set; }
-
-    public string Description { get; set; } = null!;
-
-    public string Location { get; set; } = null!;
-
-    public int NbPeople { get; set; }
-
-    public int IdUser { get; set; }
-
-    public int IdSport { get; set; }
-
-    public int IdLevel { get; set; }
-
-    public int IdEventGender { get; set; }
-
-    public virtual EventGender IdEventGenderNavigation { get; set; } = null!;
-
-    public virtual Level IdLevelNavigation { get; set; } = null!;
-
-    public virtual Sport IdSportNavigation { get; set; } = null!;
-
-    public virtual User IdUserNavigation { get; set; } = null!;
-
-    public virtual ICollection<User> Ids { get; set; } = new List<User>();
+        public virtual ICollection<EventInscription> EventInscriptions { get; set; }
+    }
 }
