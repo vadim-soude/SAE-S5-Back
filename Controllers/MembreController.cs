@@ -10,13 +10,20 @@ namespace WorkshopAPI.Controllers;
 public class MembreController : ControllerBase
 {
     private readonly bdeContext _context;
-    private const int PBKDF2IterCount = 1000; // default for Rfc2898DeriveBytes
-    private const int PBKDF2SubkeyLength = 256/8; // 256 bits
+    private const int Pbkdf2IterCount = 1000; // default for Rfc2898DeriveBytes
+    private const int Pbkdf2SubkeyLength = 256/8; // 256 bits
     private const int SaltSize = 128/8; // 128 bit
     
     public MembreController(bdeContext context)
     {
         _context = context;
+    }
+    
+    //GET: api/membre/test
+    [HttpGet("test")]
+    public async Task<ActionResult<int>> GetTest()
+    {
+        return 15;
     }
     
     // POST: api/membre/signup
@@ -34,8 +41,11 @@ public class MembreController : ControllerBase
         }
 
         membre.Password = HashPassword(membre.Password);
+
+        membre.Statut = "Non-adherent";
+        membre.PpImageUrl = "assets/default-pp.png";
         
-        _context.Membres.Add(membre);
+        _context.Membres?.Add(membre);
         await _context.SaveChangesAsync();
         
         return Ok();
@@ -50,13 +60,13 @@ public class MembreController : ControllerBase
         {
             return Unauthorized("No Account find with this email");
         }
-
-        bool passwordValid = VerifyHashedPassword(user.Password, login.Password);
+    
+        bool passwordValid = login.Password != null && user.Password != null && VerifyHashedPassword(user.Password, login.Password);
         if (!passwordValid)
         {
             return Unauthorized("Invalid password");
         }
-
+    
         return user;
     }
     
@@ -64,21 +74,21 @@ public class MembreController : ControllerBase
     {
         if (password == null)
         {
-            throw new ArgumentNullException("password");
+            throw new ArgumentNullException(nameof(password));
         }
 
         // Produce a version 0 (see comment above) text hash.
         byte[] salt;
         byte[] subkey;
-        using (var deriveBytes = new Rfc2898DeriveBytes(password, SaltSize, PBKDF2IterCount))
+        using (var deriveBytes = new Rfc2898DeriveBytes(password, SaltSize, Pbkdf2IterCount))
         {
             salt = deriveBytes.Salt;
-            subkey = deriveBytes.GetBytes(PBKDF2SubkeyLength);
+            subkey = deriveBytes.GetBytes(Pbkdf2SubkeyLength);
         }
 
-        var outputBytes = new byte[1 + SaltSize + PBKDF2SubkeyLength];
+        var outputBytes = new byte[1 + SaltSize + Pbkdf2SubkeyLength];
         Buffer.BlockCopy(salt, 0, outputBytes, 1, SaltSize);
-        Buffer.BlockCopy(subkey, 0, outputBytes, 1 + SaltSize, PBKDF2SubkeyLength);
+        Buffer.BlockCopy(subkey, 0, outputBytes, 1 + SaltSize, Pbkdf2SubkeyLength);
         return Convert.ToBase64String(outputBytes);
     }
     
@@ -93,7 +103,7 @@ public class MembreController : ControllerBase
 
         // Verify a version 0 (see comment above) text hash.
 
-        if (hashedPasswordBytes.Length != (1 + SaltSize + PBKDF2SubkeyLength) || hashedPasswordBytes[0] != 0x00)
+        if (hashedPasswordBytes.Length != (1 + SaltSize + Pbkdf2SubkeyLength) || hashedPasswordBytes[0] != 0x00)
         {
             // Wrong length or version header.
             return false;
@@ -101,13 +111,13 @@ public class MembreController : ControllerBase
 
         var salt = new byte[SaltSize];
         Buffer.BlockCopy(hashedPasswordBytes, 1, salt, 0, SaltSize);
-        var storedSubkey = new byte[PBKDF2SubkeyLength];
-        Buffer.BlockCopy(hashedPasswordBytes, 1 + SaltSize, storedSubkey, 0, PBKDF2SubkeyLength);
+        var storedSubkey = new byte[Pbkdf2SubkeyLength];
+        Buffer.BlockCopy(hashedPasswordBytes, 1 + SaltSize, storedSubkey, 0, Pbkdf2SubkeyLength);
 
         byte[] generatedSubkey;
-        using (var deriveBytes = new Rfc2898DeriveBytes(password, salt, PBKDF2IterCount))
+        using (var deriveBytes = new Rfc2898DeriveBytes(password, salt, Pbkdf2IterCount))
         {
-            generatedSubkey = deriveBytes.GetBytes(PBKDF2SubkeyLength);
+            generatedSubkey = deriveBytes.GetBytes(Pbkdf2SubkeyLength);
         }
         return ByteArraysEqual(storedSubkey, generatedSubkey);
     }
