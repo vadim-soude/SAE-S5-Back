@@ -9,7 +9,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
-builder.Services.AddDbContext<bdeContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+builder.Services.AddDbContext<bdeContext>(options => options.UseMySql(connectionString ?? throw new InvalidOperationException(), ServerVersion.AutoDetect(connectionString)));
+
+Console.WriteLine("BDD connected !");
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -21,5 +23,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+Console.WriteLine("API is ready !");
 
 app.Run();
